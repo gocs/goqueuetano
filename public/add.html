@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Add Customer</h1>
+    <form action="/" method="GET" style="display: inline-block;">
+        <input type="submit" value="Home">
+    </form>
+    <hr>
+    <form method="POST">
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name">
+        <br><br>
+        <label for="duration">Duration</label>
+        <input type="datetime-local" name="duration" id="duration" step="1" min="{{.Today}}">
+        <br><br>
+        <input type="submit">
+    </form>
+</body>
+
+</html>
