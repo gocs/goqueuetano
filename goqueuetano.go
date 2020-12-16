@@ -49,8 +49,6 @@ func NewCustomers() *Customers {
 	return c
 }
 
-
-
 // Add is a new entry to the queue; ID is non editable
 func (c *Customers) Add(customer Customer) {
 	customer.ID = uuid.New().String()

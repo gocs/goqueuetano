@@ -22,14 +22,15 @@
         <input type="submit" value="Edit">
     </form>
     | <form action="/delete" method="POST" style="display: inline-block;">
+        {{.CSRF}}
         <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
         <input type="submit" value="Delete">
     </form>
     {{end}}
     <hr>
     <ol>
-        {{range $k, $v := .Customers}}
-        <li>name: {{$v.Name}}, duration: {{$v.Duration}}, Remaining Time: <span id="time-left-{{$k}}"></span></li>
+        {{range .Customers}}
+        <li>name: {{.Name}}, duration: {{.Duration}}, Remaining Time: <span id="time-left-{{.ID}}"></span></li>
         {{end}}
     </ol>
     <script>

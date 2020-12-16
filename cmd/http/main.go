@@ -58,6 +58,7 @@ func homePage(app App) http.HandlerFunc {
 		Customers        goqueuetano.Order
 		CustomerNotEmpty bool
 		CustomerSize     int
+		CSRF             template.HTML
 	}
 	tmp := template.Must(template.ParseFiles("./public/layout.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +66,7 @@ func homePage(app App) http.HandlerFunc {
 			Customers:        app.customers,
 			CustomerNotEmpty: app.customers.Len() > 0,
 			CustomerSize:     app.customers.Len(),
+			CSRF:             csrf.TemplateField(r),
 		}
 		tmp.Execute(w, data)
 	}
@@ -77,22 +79,22 @@ func RemainingRealTime(app App) http.HandlerFunc {
 		WriteBufferSize: 1024,
 	}
 	type Customer struct {
-		Index    int           `json:"i"`
+		Index    string        `json:"i"`
 		TimeLeft time.Duration `json:"time-left"`
-		Reload bool `json:"reload"`
+		Reload   bool          `json:"reload"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
 
 		for {
-			ticker := time.NewTicker(1 * time.Second)
+			ticker := time.NewTicker(100 * time.Millisecond)
 			for range ticker.C {
 				var cs []Customer
-				for k, c := range app.customers.All() {
+				for _, c := range app.customers.All() {
 					cs = append(cs, Customer{
-						Index:    k,
+						Index:    c.ID,
 						TimeLeft: c.TimeLeft(),
-						Reload: c.TimeLeft() < 1 * time.Second,
+						Reload:   c.TimeLeft() < 1*time.Second,
 					})
 				}
 
