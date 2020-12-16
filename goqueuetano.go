@@ -16,6 +16,8 @@ type Customer struct {
 // Order defines how customers uses the queue
 type Order interface {
 	Add(customer Customer)
+	All() []Customer
+	Len() int
 	GetByKey(k int) (customer Customer)
 	Edit(customer Customer)
 	Delete(id string)
@@ -28,6 +30,16 @@ type Customers []Customer
 func (c *Customers) Add(customer Customer) {
 	customer.ID = uuid.New().String()
 	*c = append(*c, customer)
+}
+
+// All of itself is returned out from the interface
+func (c *Customers) All() []Customer {
+	return *c
+}
+
+// Len is a interface container len; interface can't be len, `Customers` can
+func (c *Customers) Len() int {
+	return len(*c)
 }
 
 // GetByKey identifies the customer by its order

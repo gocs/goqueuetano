@@ -44,21 +44,21 @@ func main() {
 }
 
 type App struct {
-	customers *goqueuetano.Customers
+	customers goqueuetano.Order
 }
 
 func homePage(app App) http.HandlerFunc {
 	type Data struct {
-		Customers        goqueuetano.Customers
+		Customers        goqueuetano.Order
 		CustomerNotEmpty bool
 		CustomerSize     int
 	}
 	tmp := template.Must(template.ParseFiles("./public/layout.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := Data{
-			Customers:        *app.customers,
-			CustomerNotEmpty: len(*app.customers) > 0,
-			CustomerSize:     len(*app.customers),
+			Customers:        app.customers,
+			CustomerNotEmpty: app.customers.Len() > 0,
+			CustomerSize:     app.customers.Len(),
 		}
 		tmp.Execute(w, data)
 	}
@@ -67,14 +67,14 @@ func homePage(app App) http.HandlerFunc {
 func addPage(app App) http.HandlerFunc {
 	type Data struct {
 		Today string
-		CSRF     template.HTML
+		CSRF  template.HTML
 	}
 	tmp := template.Must(template.ParseFiles("./public/add.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		layout := "2006-01-02T15:04:05"
 		data := Data{
 			Today: time.Now().Format(layout),
-			CSRF:     csrf.TemplateField(r),
+			CSRF:  csrf.TemplateField(r),
 		}
 		tmp.Execute(w, data)
 	}
