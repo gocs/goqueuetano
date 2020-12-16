@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -15,12 +16,18 @@ import (
 	"github.com/gorilla/csrf"
 )
 
+var (
+	csrfKey = flag.String("K", "byte array", "csrf key")
+)
+
 func main() {
 	a := App{
 		customers: &goqueuetano.Customers{},
 	}
 
 	r := chi.NewRouter()
+	csrfKey := []byte(*csrfKey)
+	r.Use(csrf.Protect(csrfKey, csrf.Secure(false)))
 	r.Use(middleware.Logger)
 
 	r.Get("/", homePage(a))
@@ -60,12 +67,14 @@ func homePage(app App) http.HandlerFunc {
 func addPage(app App) http.HandlerFunc {
 	type Data struct {
 		Today string
+		CSRF     template.HTML
 	}
 	tmp := template.Must(template.ParseFiles("./public/add.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		layout := "2006-01-02T15:04:05"
 		data := Data{
 			Today: time.Now().Format(layout),
+			CSRF:     csrf.TemplateField(r),
 		}
 		tmp.Execute(w, data)
 	}
