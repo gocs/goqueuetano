@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -14,6 +15,7 @@ import (
 	"github.com/gocs/goqueuetano"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -22,7 +24,7 @@ var (
 
 func main() {
 	a := App{
-		customers: &goqueuetano.Customers{},
+		customers: goqueuetano.NewCustomers(),
 	}
 
 	r := chi.NewRouter()
@@ -40,41 +42,88 @@ func main() {
 
 	r.Post("/delete", deleteForm(a))
 
+	// ws
+	r.Get("/ws", RemainingRealTime(a))
+
 	http.ListenAndServe(":3000", r)
 }
 
+// App holds the state of the customers
 type App struct {
-	customers *goqueuetano.Customers
+	customers goqueuetano.Order
 }
 
 func homePage(app App) http.HandlerFunc {
 	type Data struct {
-		Customers        goqueuetano.Customers
+		Customers        goqueuetano.Order
 		CustomerNotEmpty bool
 		CustomerSize     int
+		CSRF             template.HTML
 	}
 	tmp := template.Must(template.ParseFiles("./public/layout.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := Data{
-			Customers:        *app.customers,
-			CustomerNotEmpty: len(*app.customers) > 0,
-			CustomerSize:     len(*app.customers),
+			Customers:        app.customers,
+			CustomerNotEmpty: app.customers.Len() > 0,
+			CustomerSize:     app.customers.Len(),
+			CSRF:             csrf.TemplateField(r),
 		}
 		tmp.Execute(w, data)
+	}
+}
+
+// RemainingRealTime gives real-time remaining time to client
+func RemainingRealTime(app App) http.HandlerFunc {
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	type Customer struct {
+		Index    string        `json:"i"`
+		TimeLeft time.Duration `json:"time-left"`
+		Reload   bool          `json:"reload"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+
+		for {
+			ticker := time.NewTicker(100 * time.Millisecond)
+			for range ticker.C {
+				var cs []Customer
+				for _, c := range app.customers.All() {
+					cs = append(cs, Customer{
+						Index:    c.ID,
+						TimeLeft: c.TimeLeft(),
+						Reload:   c.TimeLeft() < 1*time.Second,
+					})
+				}
+
+				msg, err := json.Marshal(cs)
+				if err != nil {
+					log.Println("err:", err)
+					return
+				}
+
+				if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+					fmt.Println(err)
+					return
+				}
+			}
+		}
 	}
 }
 
 func addPage(app App) http.HandlerFunc {
 	type Data struct {
 		Today string
-		CSRF     template.HTML
+		CSRF  template.HTML
 	}
 	tmp := template.Must(template.ParseFiles("./public/add.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		layout := "2006-01-02T15:04:05"
 		data := Data{
 			Today: time.Now().Format(layout),
-			CSRF:     csrf.TemplateField(r),
+			CSRF:  csrf.TemplateField(r),
 		}
 		tmp.Execute(w, data)
 	}
@@ -83,6 +132,7 @@ func addPage(app App) http.HandlerFunc {
 func addForm(app App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
+		// duration's actual value is a datetime-local
 		duration := r.FormValue("duration")
 		// concat the timezone
 		fmtDuration := fmt.Sprintf("%s%s", duration, "+08:00")

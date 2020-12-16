@@ -10,7 +10,10 @@
 <body>
     <h1>Customers</h1>
 
-    <form action="/add" method="GET" style="display: inline-block;">
+    <form action="/" method="GET" style="display: inline-block;">
+        <input type="submit" value="Home">
+    </form>
+    | <form action="/add" method="GET" style="display: inline-block;">
         <input type="submit" value="Add">
     </form>
     {{if .CustomerNotEmpty}}
@@ -19,6 +22,7 @@
         <input type="submit" value="Edit">
     </form>
     | <form action="/delete" method="POST" style="display: inline-block;">
+        {{.CSRF}}
         <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
         <input type="submit" value="Delete">
     </form>
@@ -26,9 +30,26 @@
     <hr>
     <ol>
         {{range .Customers}}
-        <li>name: {{.Name}}, duration: {{.Duration}}</li>
+        <li>name: {{.Name}}, duration: {{.Duration}}, Remaining Time: <span id="time-left-{{.ID}}"></span></li>
         {{end}}
     </ol>
+    <script>
+        let socket = new WebSocket("ws://localhost:3000/ws");
+
+        socket.onopen = function () {
+            console.log("Status: Connected");
+        };
+
+        socket.onmessage = function (e) {
+            var cs = JSON.parse(e.data);
+            if (!cs) return;
+            for (const cust of cs) {
+                let id = `time-left-${cust.i}`;
+                let tl = document.getElementById(id);
+                tl.innerHTML = cust["time-left"];
+            }
+        };
+    </script>
 </body>
 
 </html>
