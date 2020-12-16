@@ -24,4 +24,8 @@ jobs:
 
       - name: Build docker
         run: |
-          docker build -t paaar/goqueuetano:0.0.1 .
+          docker build -t paaar/goqueuetano_app:0.0.1 .
+
+      - name: Push to docker
+        run: |
+          docker push paaar/goqueuetano_app:0.0.1
