@@ -14,8 +14,8 @@ type Customer struct {
 	entry    time.Time
 }
 
-// TimeLeft gives the remaining time from entry
-func (c *Customer) TimeLeft() time.Duration {
+// Countdown gives the remaining time from entry
+func (c *Customer) Countdown() time.Duration {
 	deadline := c.entry.Add(c.Duration)
 	return deadline.Sub(time.Now())
 }
@@ -40,7 +40,7 @@ func NewCustomers() *Customers {
 		for {
 			// clean all the customer when they are done
 			for _, cust := range c.All() {
-				if cust.TimeLeft() < 0 {
+				if cust.Countdown() < 0 {
 					c.Delete(cust.ID)
 				}
 			}

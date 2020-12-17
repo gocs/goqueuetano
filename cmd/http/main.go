@@ -55,7 +55,6 @@ type App struct {
 
 func homePage(app App) http.HandlerFunc {
 	type Data struct {
-		Customers        goqueuetano.Order
 		CustomerNotEmpty bool
 		CustomerSize     int
 		CSRF             template.HTML
@@ -63,12 +62,14 @@ func homePage(app App) http.HandlerFunc {
 	tmp := template.Must(template.ParseFiles("./public/layout.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := Data{
-			Customers:        app.customers,
 			CustomerNotEmpty: app.customers.Len() > 0,
 			CustomerSize:     app.customers.Len(),
 			CSRF:             csrf.TemplateField(r),
 		}
-		tmp.Execute(w, data)
+
+		if err := tmp.Execute(w, data); err != nil {
+			log.Println("err in homePage:", err)
+		}
 	}
 }
 
@@ -79,22 +80,29 @@ func RemainingRealTime(app App) http.HandlerFunc {
 		WriteBufferSize: 1024,
 	}
 	type Customer struct {
-		Index    string        `json:"i"`
-		TimeLeft time.Duration `json:"time-left"`
-		Reload   bool          `json:"reload"`
+		Index     string        `json:"i"`
+		Name      string        `json:"name"`
+		Duration  time.Duration `json:"duration"`
+		Countdown time.Duration `json:"countdown"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("err:", err)
+			return
+		}
 
 		for {
-			ticker := time.NewTicker(100 * time.Millisecond)
+			// prevent instant refresh
+			ticker := time.NewTicker(50 * time.Millisecond)
 			for range ticker.C {
 				var cs []Customer
 				for _, c := range app.customers.All() {
 					cs = append(cs, Customer{
-						Index:    c.ID,
-						TimeLeft: c.TimeLeft(),
-						Reload:   c.TimeLeft() < 1*time.Second,
+						Index:     c.ID,
+						Name:      c.Name,
+						Duration:  c.Duration,
+						Countdown: c.Countdown(),
 					})
 				}
 
@@ -105,7 +113,7 @@ func RemainingRealTime(app App) http.HandlerFunc {
 				}
 
 				if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					return
 				}
 			}
@@ -125,7 +133,9 @@ func addPage(app App) http.HandlerFunc {
 			Today: time.Now().Format(layout),
 			CSRF:  csrf.TemplateField(r),
 		}
-		tmp.Execute(w, data)
+		if err := tmp.Execute(w, data); err != nil {
+			log.Println("err in addPage:", err)
+		}
 	}
 }
 
@@ -182,7 +192,9 @@ func editPage(app App) http.HandlerFunc {
 			Today:    time.Now().Format(layout),
 			CSRF:     csrf.TemplateField(r),
 		}
-		tmp.Execute(w, data)
+		if err := tmp.Execute(w, data); err != nil {
+			log.Println("err in editPage:", err)
+		}
 	}
 }
 

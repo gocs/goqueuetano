@@ -18,20 +18,18 @@
     </form>
     {{if .CustomerNotEmpty}}
     | <form action="/edit" method="GET" style="display: inline-block;">
-        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
+        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1" required>
         <input type="submit" value="Edit">
     </form>
     | <form action="/delete" method="POST" style="display: inline-block;">
         {{.CSRF}}
-        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
+        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1" required>
         <input type="submit" value="Delete">
     </form>
     {{end}}
     <hr>
-    <ol>
-        {{range .Customers}}
-        <li>name: {{.Name}}, duration: {{.Duration}}, Remaining Time: <span id="time-left-{{.ID}}"></span></li>
-        {{end}}
+    <ol id="customers">
+        <label for="progress-1"><i>Empty List</i></label>
     </ol>
     <script>
         let socket = new WebSocket("ws://localhost:3000/ws");
@@ -40,13 +38,22 @@
             console.log("Status: Connected");
         };
 
+        let ol = document.getElementById("customers");
+        // the browsers' cpu is here
         socket.onmessage = function (e) {
-            var cs = JSON.parse(e.data);
-            if (!cs) return;
-            for (const cust of cs) {
-                let id = `time-left-${cust.i}`;
-                let tl = document.getElementById(id);
-                tl.innerHTML = cust["time-left"];
+            let cs = JSON.parse(e.data);
+            if (!cs) {
+                ol.innerHTML = '<label for="progress-1"><i>Empty List</i></label>';
+                return;
+            }
+
+            ol.innerHTML = ''; // clear the list
+            for (const [k, cust] of cs.entries()) {
+                let label = `<label for="progress${k}">${cust.name}</label>`
+                let progress =
+                    `<progress id="progress${k}" max="${cust.duration}" value="${cust.countdown}"></progress>`
+
+                ol.innerHTML += `<li>${label} ${progress}</li>`;
             }
         };
     </script>
