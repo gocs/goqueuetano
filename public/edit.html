@@ -15,7 +15,6 @@
     <hr>
     <form method="POST">
         {{.CSRF}}
-        <input type="hidden" name="id" value="{{.Customer.ID}}">
         <label for="name">Name</label>
         <input type="text" name="name" id="name" value="{{.Customer.Name}}" required>
         <br><br>

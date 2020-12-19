@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gocs/goqueuetano"
-	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/websocket"
 )
@@ -51,6 +50,7 @@ func main() {
 // App holds the state of the customers
 type App struct {
 	customers goqueuetano.Order
+	editID    string
 }
 
 func homePage(app App) http.HandlerFunc {
@@ -99,10 +99,10 @@ func RemainingRealTime(app App) http.HandlerFunc {
 				var cs []Customer
 				for _, c := range app.customers.All() {
 					cs = append(cs, Customer{
-						Index:     c.ID,
+						Index:     c.ID(),
 						Name:      c.Name,
 						Duration:  c.Duration,
-						Countdown: c.Countdown(),
+						Countdown: c.RemainingTime(),
 					})
 				}
 
@@ -184,6 +184,7 @@ func editPage(app App) http.HandlerFunc {
 		}
 
 		customer := app.customers.GetByKey(k - 1)
+		app.editID = customer.ID()
 		layout := "2006-01-02T15:04:05"
 		data := Data{
 			// the index is decremented in order to input using index of the ordered list
@@ -200,17 +201,8 @@ func editPage(app App) http.HandlerFunc {
 
 func editForm(app App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ID := r.FormValue("id")
 		name := r.FormValue("name")
 		duration := r.FormValue("duration")
-
-		id, err := uuid.Parse(ID)
-		if err != nil {
-			log.Println("err:", err)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			log.Println("cancelled")
-			return
-		}
 
 		// concat the timezone
 		fmtDuration := fmt.Sprintf("%s%s", duration, "+08:00")
@@ -222,11 +214,10 @@ func editForm(app App) http.HandlerFunc {
 			return
 		}
 
-		app.customers.Edit(goqueuetano.Customer{
-			ID:       id.String(),
-			Name:     name,
-			Duration: t.Sub(time.Now()),
-		})
+		customer := app.customers.Get(app.editID)
+		customer.Name = name
+		customer.Duration = t.Sub(time.Now())
+		app.customers.Edit(customer)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Println("redirect to `/`")
@@ -245,7 +236,7 @@ func deleteForm(app App) http.HandlerFunc {
 		}
 		// the index is decremented in order to input using index of the ordered list
 		c := app.customers.GetByKey(k - 1)
-		app.customers.Delete(c.ID)
+		app.customers.Delete(c.ID())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Println("redirect to `/`")
 	}

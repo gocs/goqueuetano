@@ -5,26 +5,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        form.ib {
+            display: inline-block;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Customers</h1>
 
-    <form action="/" method="GET" style="display: inline-block;">
+    <form action="/" method="GET" class="ib">
         <input type="submit" value="Home">
     </form>
-    | <form action="/add" method="GET" style="display: inline-block;">
+    | <form action="/add" method="GET" class="ib">
         <input type="submit" value="Add">
     </form>
     {{if .CustomerNotEmpty}}
-    | <form action="/edit" method="GET" style="display: inline-block;">
+    | <form action="/edit" method="GET" class="ib">
         <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1" required>
         <input type="submit" value="Edit">
     </form>
-    | <form action="/delete" method="POST" style="display: inline-block;">
+    | <form action="/delete" method="POST" class="ib">
         {{.CSRF}}
-        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1" required>
+        <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
         <input type="submit" value="Delete">
+    </form>
+    | <form action="/table" method="POST" class="ib">
+        {{.CSRF}}
+        <input type="number" name="key" id="key" min="1" max="" placeholder="Key" step="1" required>
+        <input type="submit" value="Table">
     </form>
     {{end}}
     <hr>
