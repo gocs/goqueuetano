@@ -13,7 +13,7 @@ type Order interface {
 	All() []Customer
 	Len() int
 	Get(id string) (customer Customer)
-	GetByKey(k int) (customer Customer)
+	GetByKey(k int) (customer Customer, err error)
 	Edit(customer Customer) error
 	Delete(id string) error
 }
@@ -60,8 +60,11 @@ func (c *Customers) Len() int {
 }
 
 // GetByKey identifies the customer by its order
-func (c *Customers) GetByKey(k int) (customer Customer) {
-	return (*c)[k]
+func (c *Customers) GetByKey(k int) (customer Customer, err error) {
+	if c.Len() == 0 {
+		return Customer{}, errors.New("list not made")
+	}
+	return (*c)[k], nil
 }
 
 // Get gives the customer by its id
