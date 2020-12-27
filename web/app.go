@@ -9,5 +9,5 @@ type App struct {
 }
 
 func New() *App {
-	return &App{customers: goqueuetano.NewCustomers()}
+	return &App{customers: &goqueuetano.Customers{}}
 }

@@ -1,6 +1,7 @@
 package goqueuetano
 
 import (
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,44 +20,39 @@ type Order interface {
 }
 
 // Customers is the collection of the users
-type Customers []Customer
-
-// NewCustomers will ensure customers will leave after the duration times out
-func NewCustomers() *Customers {
-	c := &Customers{}
-	go func() {
-		for {
-			// clean all the customers' table when they are done
-			for _, cust := range c.All() {
-				if cust.RemainingTime() < 0 {
-					c.Delete(cust.ID())
-				}
-			}
-		}
-	}()
-	return c
+type Customers struct {
+	list []Customer
+	mu   sync.Mutex
 }
 
 // Add is a new entry to the queue; ID is non editable
 func (c *Customers) Add(customer ...Customer) {
 	for _, v := range customer {
-		*c = append(*c, Customer{
+		cust := Customer{
 			id:       uuid.New().String(),
 			Name:     v.Name,
 			Duration: v.Duration,
 			entry:    time.Now(),
-		})
+		}
+
+		c.mu.Lock()
+		c.list = append(c.list, cust)
+		c.mu.Unlock()
 	}
 }
 
-// All of itself is returned out from the interface
+// All of the available customers is returned out from the interface
 func (c *Customers) All() []Customer {
-	return *c
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.list
 }
 
-// Len is a interface container len; interface can't be len, `Customers` can
+// Len returns the number of available customers
 func (c *Customers) Len() int {
-	return len(*c)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.list)
 }
 
 // GetByKey identifies the customer by its order
@@ -64,12 +60,15 @@ func (c *Customers) GetByKey(k int) (customer Customer, err error) {
 	if c.Len() == 0 {
 		return Customer{}, errors.New("list not made")
 	}
-	return (*c)[k], nil
+	if k > c.Len()-1 {
+		return Customer{}, errors.Errorf("key out of range from the list [%v]", k)
+	}
+	return c.list[k], nil
 }
 
 // Get gives the customer by its id
 func (c *Customers) Get(id string) (customer Customer) {
-	for _, cust := range *c {
+	for _, cust := range c.list {
 		if cust.id == id {
 			customer = cust
 			break
@@ -80,69 +79,60 @@ func (c *Customers) Get(id string) (customer Customer) {
 
 // Edit fulfill the customers changes
 func (c *Customers) Edit(customer Customer) error {
-	// filter invalid values
-	if customer.id == "" {
-		return errors.New("ID must not be Empty")
-	}
-	_, err := uuid.Parse(customer.id)
+	index, err := findKeyByIndex(c, customer.ID())
 	if err != nil {
 		return err
 	}
-
-	// if there are no more items, recreate
-	if len(*c) < 1 {
-		return errors.New("customer list is empty")
-	}
-
-	index, err := getIndex(*c, customer.ID())
-	if err != nil {
-		return errors.Wrap(err, "edit can't get index")
-	}
 	// prevent id and entry to be modified
-	(*c)[index] = Customer{
-		id:       (*c)[index].ID(),
+	c.list[index] = Customer{
+		id:       c.list[index].ID(),
 		Name:     customer.Name,
 		Duration: customer.Duration,
-		entry:    (*c)[index].entry,
+		entry:    c.list[index].entry,
 	}
 	return nil
 }
 
 // Delete will acknowledges the departure of the customer
 func (c *Customers) Delete(id string) error {
-	// filter invalid values
-	if id == "" {
-		return errors.New("ID must not be Empty")
-	}
-	_, err := uuid.Parse(id)
+	// index should never error
+	index, err := findKeyByIndex(c, id)
 	if err != nil {
 		return err
 	}
 
-	// if there are no more items, recreate
-	if len(*c) < 1 {
-		return errors.New("customer list is empty")
-	}
-
-	// index should never error
-	index, err := getIndex(*c, id)
-	if err != nil {
-		return errors.Wrap(err, "delete can't get index")
-	}
-
 	// concat lists before and after the specific item
-	frontC := (*c)[:index]
-	backC := (*c)[index+1:]
-	*c = append(frontC, backC...)
+	frontC := c.list[:index]
+	backC := c.list[index+1:]
+	c.list = append(frontC, backC...)
 	return nil
 }
 
-// getIndex
-func getIndex(c Customers, id string) (int, error) {
-	for k, v := range c {
-		if v.ID() == id {
-			return k, nil
+// findKeyByIndex
+func findKeyByIndex(c *Customers, index string) (key int, err error) {
+	key = -1
+	err = errors.New("item not found")
+
+	if _, err = uuid.Parse(index); err != nil {
+		return
+	}
+
+	// if there are no more items, recreate
+	if c.Len() == 0 {
+		err = errors.New("customer list is empty")
+		return
+	}
+
+	c.mu.Lock()
+	clist := c.list
+	c.mu.Unlock()
+
+	for k, v := range clist {
+		if v.ID() == index {
+			key = k
+			err = nil
 		}
 	}
-	return -1, errors.New("item not found")
+
+	return
 }

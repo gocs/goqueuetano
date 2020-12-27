@@ -10,7 +10,7 @@ import (
 
 // TestCustomerID tests for the existence and validity of uuid in ID
 func TestCustomerID(t *testing.T) {
-	cs := goqueuetano.NewCustomers()
+	cs := goqueuetano.Customers{}
 	cs.Add(goqueuetano.Customer{})
 
 	c, err := cs.GetByKey(0)
@@ -33,7 +33,7 @@ func TestRemainingTime(t *testing.T) {
 	sleepTime := time.Second
 	margin := 50 * time.Millisecond
 
-	cs := goqueuetano.NewCustomers()
+	cs := goqueuetano.Customers{}
 	cs.Add(goqueuetano.Customer{Duration: 6 * time.Second})
 
 	time.Sleep(sleepTime)
