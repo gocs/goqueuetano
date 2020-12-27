@@ -10,15 +10,18 @@ import (
 
 // TestCustomerID tests for the existence and validity of uuid in ID
 func TestCustomerID(t *testing.T) {
-	cs := goqueuetano.Customers{}
+	cs := goqueuetano.NewCustomers()
 	cs.Add(goqueuetano.Customer{})
 
-	id := cs[0].ID()
-	if id == "" {
-		t.Errorf("ID should not be empty: %s", id)
+	c, err := cs.GetByKey(0)
+	if err != nil {
+		t.Errorf("unexpected behaviour: %v", err)
+	}
+	if c.ID() == "" {
+		t.Errorf("ID should not be empty: %s", c.ID())
 	}
 
-	_, err := uuid.Parse(id)
+	_, err = uuid.Parse(c.ID())
 	if err != nil {
 		t.Errorf("ID is not valid uuid: %v", err)
 	}
@@ -30,11 +33,17 @@ func TestRemainingTime(t *testing.T) {
 	sleepTime := time.Second
 	margin := 50 * time.Millisecond
 
-	cs := goqueuetano.Customers{}
+	cs := goqueuetano.NewCustomers()
 	cs.Add(goqueuetano.Customer{Duration: 6 * time.Second})
 
 	time.Sleep(sleepTime)
-	actual := cs[0].RemainingTime()
+
+	c, err := cs.GetByKey(0)
+	if err != nil {
+		t.Errorf("unexpected behaviour: %v", err)
+	}
+
+	actual := c.RemainingTime()
 	mexpected := expected - margin
 	if expected < actual {
 		t.Errorf("expected: %s < actual: %s", expected, actual)
@@ -42,5 +51,5 @@ func TestRemainingTime(t *testing.T) {
 	if mexpected > actual {
 		t.Errorf("margin+expected: %s > actual: %s", mexpected, actual)
 	}
-	
+
 }
