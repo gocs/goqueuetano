@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/gocs/goqueuetano"
 	"github.com/gocs/goqueuetano/web"
 	"github.com/gorilla/csrf"
 )
@@ -17,7 +16,7 @@ var (
 )
 
 func main() {
-	a := web.New(goqueuetano.NewCustomers())
+	a := web.New()
 
 	r := chi.NewRouter()
 	csrfKey := []byte(*csrfKey)

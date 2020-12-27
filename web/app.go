@@ -8,6 +8,6 @@ type App struct {
 	editID    string
 }
 
-func New(cs goqueuetano.Order) *App {
-	return &App{customers: cs}
+func New() *App {
+	return &App{customers: goqueuetano.NewCustomers()}
 }
