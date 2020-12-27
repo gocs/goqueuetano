@@ -19,7 +19,8 @@
         <input type="text" name="name" id="name" required>
         <br><br>
         <label for="duration">Duration</label>
-        <input type="datetime-local" name="duration" id="duration" step="1" min="{{.Today}}" required>
+        <input type="datetime-local" name="duration" id="duration" step="1" min="{{.Today}}" value="{{.Today}}"
+            required>
         <br><br>
         <input type="submit">
     </form>
