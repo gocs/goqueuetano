@@ -32,7 +32,6 @@ func AddForm(app *App) http.HandlerFunc {
 		})
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		log.Println("redirect to `/`")
 	}
 }
 
@@ -57,7 +56,6 @@ func EditForm(app *App) http.HandlerFunc {
 		app.customers.Edit(customer)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		log.Println("redirect to `/`")
 	}
 }
 
@@ -81,6 +79,5 @@ func DeleteForm(app *App) http.HandlerFunc {
 		}
 		app.customers.Delete(c.ID())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		log.Println("redirect to `/`")
 	}
 }
