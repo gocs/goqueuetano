@@ -17,7 +17,7 @@ func HomePage(app App) http.HandlerFunc {
 		CustomerSize     int
 		CSRF             template.HTML
 	}
-	tmp := template.Must(template.ParseFiles("./public/layout.html"))
+	tmp := template.Must(template.ParseFiles(app.pages["home"]))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := Data{
 			CustomerNotEmpty: app.customers.Len() > 0,
@@ -31,12 +31,12 @@ func HomePage(app App) http.HandlerFunc {
 	}
 }
 
-func AddPage() http.HandlerFunc {
+func AddPage(app App) http.HandlerFunc {
 	type Data struct {
 		Today string
 		CSRF  template.HTML
 	}
-	tmp := template.Must(template.ParseFiles("./public/add.html"))
+	tmp := template.Must(template.ParseFiles(app.pages["add"]))
 	return func(w http.ResponseWriter, r *http.Request) {
 		layout := "2006-01-02T15:04:05"
 		data := Data{
@@ -56,7 +56,7 @@ func EditPage(app App) http.HandlerFunc {
 		Today    string
 		CSRF     template.HTML
 	}
-	tmp := template.Must(template.ParseFiles("./public/edit.html"))
+	tmp := template.Must(template.ParseFiles(app.pages["edit"]))
 	return func(w http.ResponseWriter, r *http.Request) {
 		key := r.FormValue("key")
 		k, err := strconv.Atoi(key)

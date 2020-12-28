@@ -16,7 +16,7 @@ var (
 )
 
 func main() {
-	a := web.New()
+	a := web.NewApp()
 
 	r := chi.NewRouter()
 	csrfKey := []byte(*csrfKey)
@@ -25,7 +25,7 @@ func main() {
 
 	r.Get("/", web.HomePage(*a))
 
-	r.Get("/add", web.AddPage())
+	r.Get("/add", web.AddPage(*a))
 	r.Post("/add", web.AddForm(a))
 
 	r.Get("/edit", web.EditPage(*a))
