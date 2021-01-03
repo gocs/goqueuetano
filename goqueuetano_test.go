@@ -2,7 +2,6 @@ package goqueuetano_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gocs/goqueuetano"
 	"github.com/google/uuid"
@@ -27,29 +26,19 @@ func TestCustomerID(t *testing.T) {
 	}
 }
 
-// TestRemainingTime tests the remaining time since sleeping
-func TestRemainingTime(t *testing.T) {
-	expected := 5 * time.Second
-	sleepTime := time.Second
-	margin := 50 * time.Millisecond
+func TestUpdate(t *testing.T) {
+	c := goqueuetano.Customer{Name: "test", Total: 3}
 
-	cs := goqueuetano.Customers{}
-	cs.Add(goqueuetano.Customer{Duration: 6 * time.Second})
-
-	time.Sleep(sleepTime)
-
-	c, err := cs.GetByKey(0)
-	if err != nil {
-		t.Errorf("unexpected behaviour: %v", err)
+	if c.Done() {
+		t.Errorf("Update should not be done: %v", c)
 	}
-
-	actual := c.RemainingTime()
-	mexpected := expected - margin
-	if expected < actual {
-		t.Errorf("expected: %s < actual: %s", expected, actual)
+	if c.Done() {
+		t.Errorf("Update should not be done: %v", c)
 	}
-	if mexpected > actual {
-		t.Errorf("margin+expected: %s > actual: %s", mexpected, actual)
+	if c.Done() {
+		t.Errorf("Update should not be done: %v", c)
 	}
-
+	if !c.Done() {
+		t.Errorf("Update should be done: %v", c)
+	}
 }

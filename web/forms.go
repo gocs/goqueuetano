@@ -1,64 +1,53 @@
 package web
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gocs/goqueuetano"
 )
 
+// AddForm is a form handler for adding new customer
 func AddForm(app *App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
-		// duration's actual value is a datetime-local
-		duration := r.FormValue("duration")
-		// concat the timezone
-		fmtDuration := fmt.Sprintf("%s%s", duration, "+08:00")
-
-		t, err := time.Parse(time.RFC3339Nano, fmtDuration)
+		total := r.FormValue("total")
+		t, err := strconv.Atoi(total)
 		if err != nil {
 			log.Println("err:", err)
 			http.Redirect(w, r, "/", http.StatusSeeOther)
-			log.Println("cancelled")
 			return
 		}
 
 		app.customers.Add(goqueuetano.Customer{
-			Name:     name,
-			Duration: t.Sub(time.Now()),
+			Name:  name,
+			Total: t,
 		})
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
+// EditForm is a form handler for editing the selected customer
 func EditForm(app *App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
-		duration := r.FormValue("duration")
-
-		// concat the timezone
-		fmtDuration := fmt.Sprintf("%s%s", duration, "+08:00")
-		t, err := time.Parse(time.RFC3339Nano, fmtDuration)
-		if err != nil {
-			log.Println("err:", err)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			log.Println("cancelled")
-			return
-		}
 
 		customer := app.customers.Get(app.editID)
 		customer.Name = name
-		customer.Duration = t.Sub(time.Now())
-		app.customers.Edit(customer)
+
+		if err := app.customers.Edit(customer); err != nil {
+			log.Println("err:", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
+// DeleteForm is a form handler for deleting the selected customer
 func DeleteForm(app *App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		key := r.FormValue("key")
@@ -77,7 +66,12 @@ func DeleteForm(app *App) http.HandlerFunc {
 			log.Println("cancelled")
 			return
 		}
-		app.customers.Delete(c.ID())
+
+		if err := app.customers.Delete(c.ID()); err != nil {
+			log.Println("err:", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }

@@ -29,10 +29,10 @@ type Customers struct {
 func (c *Customers) Add(customer ...Customer) {
 	for _, v := range customer {
 		cust := Customer{
-			id:       uuid.New().String(),
-			Name:     v.Name,
-			Duration: v.Duration,
-			entry:    time.Now(),
+			id:    uuid.New().String(),
+			Name:  v.Name,
+			Total: v.Total,
+			entry: time.Now(),
 		}
 
 		c.mu.Lock()
@@ -79,16 +79,19 @@ func (c *Customers) Get(id string) (customer Customer) {
 
 // Edit fulfill the customers changes
 func (c *Customers) Edit(customer Customer) error {
+
 	index, err := findKeyByIndex(c, customer.ID())
 	if err != nil {
 		return err
 	}
+	currCust := c.list[index]
 	// prevent id and entry to be modified
 	c.list[index] = Customer{
-		id:       c.list[index].ID(),
-		Name:     customer.Name,
-		Duration: customer.Duration,
-		entry:    c.list[index].entry,
+		id:      currCust.ID(),
+		Name:    customer.Name,
+		Total:   currCust.Total,
+		Current: currCust.Current,
+		entry:   currCust.entry,
 	}
 	return nil
 }

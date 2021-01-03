@@ -2,14 +2,13 @@ package goqueuetano_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gocs/goqueuetano"
 )
 
 type Expected struct {
-	name     string
-	duration time.Duration
+	name  string
+	total int
 }
 
 // integrity_test checks whether the expected ang given values are the same.
@@ -20,8 +19,7 @@ func integrity_test(expected []Expected, given *goqueuetano.Customers) (bool, er
 		if e != nil {
 			return false, e
 		}
-		if c.Name != expected[i].name ||
-			c.Duration != expected[i].duration {
+		if c.Name != expected[i].name {
 			return false, nil
 		}
 	}
@@ -30,9 +28,9 @@ func integrity_test(expected []Expected, given *goqueuetano.Customers) (bool, er
 
 func TestOrderGetByKey(t *testing.T) {
 	expected := []Expected{
-		{name: "Apple", duration: 5 * time.Second},
-		{name: "Ball", duration: 4 * time.Second},
-		{name: "Cat", duration: 3 * time.Second},
+		{name: "Apple", total: 50},
+		{name: "Ball", total: 40},
+		{name: "Cat", total: 30},
 	}
 	cs := goqueuetano.Customers{}
 
@@ -43,7 +41,7 @@ func TestOrderGetByKey(t *testing.T) {
 	if c != (goqueuetano.Customer{}) {
 		t.Errorf("customers is expected to be empty")
 	}
-	cs.Add(goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second})
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
 
 	c, err = cs.GetByKey(2)
 	if err != nil {
@@ -75,20 +73,20 @@ func TestOrderGetByKey(t *testing.T) {
 
 func TestOrderAdd(t *testing.T) {
 	expected := []Expected{
-		{name: "Apple", duration: 5 * time.Second},
-		{name: "Ball", duration: 4 * time.Second},
-		{name: "Cat", duration: 3 * time.Second},
+		{name: "Apple", total: 50},
+		{name: "Ball", total: 40},
+		{name: "Cat", total: 30},
 	}
 	cs := goqueuetano.Customers{}
 
-	cs.Add(goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second})
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
 	if cs.Len() == 0 {
 		t.Errorf("customers must not be empty")
 	}
 
 	cs.Add(
-		goqueuetano.Customer{Name: "Ball", Duration: 4 * time.Second},
-		goqueuetano.Customer{Name: "Cat", Duration: 3 * time.Second},
+		goqueuetano.Customer{Name: "Ball", Total: 40},
+		goqueuetano.Customer{Name: "Cat", Total: 30},
 	)
 	if cs.Len() != 3 {
 		t.Errorf("customers is expected to have 3 elements")
@@ -105,16 +103,16 @@ func TestOrderAdd(t *testing.T) {
 
 func TestOrderGet(t *testing.T) {
 	expected := []Expected{
-		{name: "Apple", duration: 5 * time.Second},
-		{name: "Ball", duration: 4 * time.Second},
-		{name: "Cat", duration: 3 * time.Second},
+		{name: "Apple", total: 50},
+		{name: "Ball", total: 40},
+		{name: "Cat", total: 30},
 	}
 
 	cs := goqueuetano.Customers{}
 	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second},
-		goqueuetano.Customer{Name: "Ball", Duration: 4 * time.Second},
-		goqueuetano.Customer{Name: "Cat", Duration: 3 * time.Second},
+		goqueuetano.Customer{Name: "Apple", Total: 50},
+		goqueuetano.Customer{Name: "Ball", Total: 40},
+		goqueuetano.Customer{Name: "Cat", Total: 30},
 	)
 	c, err := cs.GetByKey(0)
 	if err != nil {
@@ -136,16 +134,16 @@ func TestOrderGet(t *testing.T) {
 
 func TestOrderEdit(t *testing.T) {
 	expected := []Expected{
-		{name: "Apple", duration: 5 * time.Second},
-		{name: "Boy", duration: 4 * time.Second},
-		{name: "Cat", duration: 3 * time.Second},
+		{name: "Apple", total: 50},
+		{name: "Boy", total: 40},
+		{name: "Cat", total: 30},
 	}
 
 	cs := goqueuetano.Customers{}
 	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second},
-		goqueuetano.Customer{Name: "Ball", Duration: 4 * time.Second},
-		goqueuetano.Customer{Name: "Cat", Duration: 3 * time.Second},
+		goqueuetano.Customer{Name: "Apple", Total: 50},
+		goqueuetano.Customer{Name: "Ball", Total: 40},
+		goqueuetano.Customer{Name: "Cat", Total: 30},
 	)
 
 	// intended operation
@@ -154,7 +152,7 @@ func TestOrderEdit(t *testing.T) {
 		t.Errorf("unexpected behaviour: %v", err)
 	}
 	c.Name = "Boy"
-	c.Duration = 4 * time.Second
+	c.Total = 40
 	err = cs.Edit(c)
 	if err != nil {
 		t.Errorf("unexpected behaviour: %v", err)
@@ -162,8 +160,8 @@ func TestOrderEdit(t *testing.T) {
 
 	// intended mis-operation
 	err = cs.Edit(goqueuetano.Customer{
-		Name:     "id less",
-		Duration: 4 * time.Second,
+		Name:  "id less",
+		Total: 40,
 	})
 	if err.Error() != "invalid UUID length: 0" {
 		t.Errorf("unexpected behaviour: %v", err)
@@ -180,15 +178,15 @@ func TestOrderEdit(t *testing.T) {
 
 func TestOrderDelete(t *testing.T) {
 	expected := []Expected{
-		{name: "Apple", duration: 5 * time.Second},
-		{name: "Cat", duration: 3 * time.Second},
+		{name: "Apple", total: 50},
+		{name: "Cat", total: 30},
 	}
 
 	cs := goqueuetano.Customers{}
 	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second},
-		goqueuetano.Customer{Name: "Ball", Duration: 4 * time.Second},
-		goqueuetano.Customer{Name: "Cat", Duration: 3 * time.Second},
+		goqueuetano.Customer{Name: "Apple", Total: 50},
+		goqueuetano.Customer{Name: "Ball", Total: 40},
+		goqueuetano.Customer{Name: "Cat", Total: 30},
 	)
 
 	// intended operation
@@ -240,7 +238,7 @@ func TestOrderEditAfterDelete(t *testing.T) {
 	expected := []Expected{}
 
 	cs := goqueuetano.Customers{}
-	cs.Add(goqueuetano.Customer{Name: "Apple", Duration: 5 * time.Second})
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
 
 	// intended operation
 	c, err := cs.GetByKey(0)

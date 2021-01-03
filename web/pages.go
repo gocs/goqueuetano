@@ -5,12 +5,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gocs/goqueuetano"
 	"github.com/gorilla/csrf"
 )
 
+// HomePage is the landing page of the app
 func HomePage(app App) http.HandlerFunc {
 	type Data struct {
 		CustomerNotEmpty bool
@@ -31,6 +31,7 @@ func HomePage(app App) http.HandlerFunc {
 	}
 }
 
+// AddPage is the template page where you can add a customer
 func AddPage(app App) http.HandlerFunc {
 	type Data struct {
 		Today string
@@ -38,10 +39,8 @@ func AddPage(app App) http.HandlerFunc {
 	}
 	tmp := template.Must(template.ParseFiles(app.pages["add"]))
 	return func(w http.ResponseWriter, r *http.Request) {
-		layout := "2006-01-02T15:04:05"
 		data := Data{
-			Today: time.Now().Format(layout),
-			CSRF:  csrf.TemplateField(r),
+			CSRF: csrf.TemplateField(r),
 		}
 		if err := tmp.Execute(w, data); err != nil {
 			log.Println("err in addPage:", err)
@@ -49,11 +48,10 @@ func AddPage(app App) http.HandlerFunc {
 	}
 }
 
-func EditPage(app App) http.HandlerFunc {
+// EditPage is the template page where you can add a customer
+func EditPage(app *App) http.HandlerFunc {
 	type Data struct {
 		Customer goqueuetano.Customer
-		DeadLine string
-		Today    string
 		CSRF     template.HTML
 	}
 	tmp := template.Must(template.ParseFiles(app.pages["edit"]))
@@ -75,12 +73,9 @@ func EditPage(app App) http.HandlerFunc {
 			return
 		}
 		app.editID = customer.ID()
-		layout := "2006-01-02T15:04:05"
 		data := Data{
 			// the index is decremented in order to input using index of the ordered list
 			Customer: customer,
-			DeadLine: time.Now().Add(customer.Duration).Format(layout),
-			Today:    time.Now().Format(layout),
 			CSRF:     csrf.TemplateField(r),
 		}
 		if err := tmp.Execute(w, data); err != nil {

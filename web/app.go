@@ -15,6 +15,7 @@ type App struct {
 	pages     map[string]string
 }
 
+// NewApp instantiates the web app with its html templates
 func NewApp() *App {
 	dir, err := os.Getwd()
 	if err != nil {

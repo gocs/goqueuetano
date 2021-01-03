@@ -31,11 +31,6 @@
         <input type="number" name="key" id="key" min="1" max="{{.CustomerSize}}" placeholder="Key" step="1">
         <input type="submit" value="Delete">
     </form>
-    | <form action="/table" method="POST" class="ib">
-        {{.CSRF}}
-        <input type="number" name="key" id="key" min="1" max="" placeholder="Key" step="1" required>
-        <input type="submit" value="Table">
-    </form>
     {{end}}
     <hr>
     <ol id="customers">
@@ -61,7 +56,7 @@
             for (const [k, cust] of cs.entries()) {
                 let label = `<label for="progress${k}">${cust.name}</label>`
                 let progress =
-                    `<progress id="progress${k}" max="${cust.duration}" value="${cust.countdown}"></progress>`
+                    `<progress id="progress${k}" max="${cust.total}" value="${cust.current}"></progress>`
 
                 ol.innerHTML += `<li>${label} ${progress}</li>`;
             }

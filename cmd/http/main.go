@@ -28,7 +28,7 @@ func main() {
 	r.Get("/add", web.AddPage(*a))
 	r.Post("/add", web.AddForm(a))
 
-	r.Get("/edit", web.EditPage(*a))
+	r.Get("/edit", web.EditPage(a))
 	r.Post("/edit", web.EditForm(a))
 
 	r.Post("/delete", web.DeleteForm(a))
