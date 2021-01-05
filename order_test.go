@@ -84,10 +84,8 @@ func TestOrderAdd(t *testing.T) {
 		t.Errorf("customers must not be empty")
 	}
 
-	cs.Add(
-		goqueuetano.Customer{Name: "Ball", Total: 40},
-		goqueuetano.Customer{Name: "Cat", Total: 30},
-	)
+	cs.Add(goqueuetano.Customer{Name: "Ball", Total: 40})
+	cs.Add(goqueuetano.Customer{Name: "Cat", Total: 30})
 	if cs.Len() != 3 {
 		t.Errorf("customers is expected to have 3 elements")
 	}
@@ -109,11 +107,10 @@ func TestOrderGet(t *testing.T) {
 	}
 
 	cs := goqueuetano.Customers{}
-	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Total: 50},
-		goqueuetano.Customer{Name: "Ball", Total: 40},
-		goqueuetano.Customer{Name: "Cat", Total: 30},
-	)
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
+	cs.Add(goqueuetano.Customer{Name: "Ball", Total: 40})
+	cs.Add(goqueuetano.Customer{Name: "Cat", Total: 30})
+
 	c, err := cs.GetByKey(0)
 	if err != nil {
 		t.Errorf("unexpected behaviour: %v", err)
@@ -140,11 +137,9 @@ func TestOrderEdit(t *testing.T) {
 	}
 
 	cs := goqueuetano.Customers{}
-	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Total: 50},
-		goqueuetano.Customer{Name: "Ball", Total: 40},
-		goqueuetano.Customer{Name: "Cat", Total: 30},
-	)
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
+	cs.Add(goqueuetano.Customer{Name: "Ball", Total: 40})
+	cs.Add(goqueuetano.Customer{Name: "Cat", Total: 30})
 
 	// intended operation
 	c, err := cs.GetByKey(1)
@@ -183,11 +178,9 @@ func TestOrderDelete(t *testing.T) {
 	}
 
 	cs := goqueuetano.Customers{}
-	cs.Add(
-		goqueuetano.Customer{Name: "Apple", Total: 50},
-		goqueuetano.Customer{Name: "Ball", Total: 40},
-		goqueuetano.Customer{Name: "Cat", Total: 30},
-	)
+	cs.Add(goqueuetano.Customer{Name: "Apple", Total: 50})
+	cs.Add(goqueuetano.Customer{Name: "Ball", Total: 40})
+	cs.Add(goqueuetano.Customer{Name: "Cat", Total: 30})
 
 	// intended operation
 	c, err := cs.GetByKey(1)

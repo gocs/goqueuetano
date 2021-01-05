@@ -10,7 +10,7 @@ import (
 
 // Order defines how customers uses the queue
 type Order interface {
-	Add(customer ...Customer)
+	Add(customer Customer)
 	All() []Customer
 	Len() int
 	Get(id string) (customer Customer)
@@ -26,19 +26,17 @@ type Customers struct {
 }
 
 // Add is a new entry to the queue; ID is non editable
-func (c *Customers) Add(customer ...Customer) {
-	for _, v := range customer {
-		cust := Customer{
-			id:    uuid.New().String(),
-			Name:  v.Name,
-			Total: v.Total,
-			entry: time.Now(),
-		}
-
-		c.mu.Lock()
-		c.list = append(c.list, cust)
-		c.mu.Unlock()
+func (c *Customers) Add(customer Customer) {
+	cust := Customer{
+		id:    uuid.New().String(),
+		Name:  customer.Name,
+		Total: customer.Total,
+		entry: time.Now(),
 	}
+
+	c.mu.Lock()
+	c.list = append(c.list, cust)
+	c.mu.Unlock()
 }
 
 // All of the available customers is returned out from the interface
