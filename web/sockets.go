@@ -23,14 +23,15 @@ func RemainingRealTime(app *App) http.HandlerFunc {
 		}
 
 		for {
+			select {
 			// prevent instant refresh
-			ticker := time.NewTicker(50 * time.Millisecond)
-			for range ticker.C {
+			case <-time.After(50 * time.Millisecond):
 				msg, err := json.Marshal(app.customers.All())
 				if err != nil {
 					log.Println("err:", err)
 					return
 				}
+				app.incr.Incr()
 
 				if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
 					log.Println(err)

@@ -17,7 +17,6 @@ func (c *Customer) ID() string {
 }
 
 // Done updates customer status
-// Done updates customer status
 func (c *Customer) Done() bool {
 	if c.Current >= c.Total {
 		return true

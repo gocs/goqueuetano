@@ -11,6 +11,7 @@ import (
 // App holds the state of the customers
 type App struct {
 	customers goqueuetano.Order
+	incr      goqueuetano.Increr
 	editID    string
 	pages     map[string]string
 }
@@ -30,8 +31,10 @@ func NewApp() *App {
 	for k, v := range pages {
 		pages[k] = fmt.Sprintf("%s%s", dir, v)
 	}
+	cs := &goqueuetano.Customers{Q: make(chan int, 2)}
 	return &App{
-		customers: &goqueuetano.Customers{},
+		customers: cs,
+		incr:      cs,
 		pages:     pages,
 	}
 }

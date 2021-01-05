@@ -19,10 +19,15 @@ type Order interface {
 	Delete(id string) error
 }
 
+type Increr interface {
+	Incr()
+}
+
 // Customers is the collection of the users
 type Customers struct {
 	list []Customer
 	mu   sync.Mutex
+	Q    chan int
 }
 
 // Add is a new entry to the queue; ID is non editable
@@ -37,6 +42,18 @@ func (c *Customers) Add(customer Customer) {
 	c.mu.Lock()
 	c.list = append(c.list, cust)
 	c.mu.Unlock()
+}
+
+func (c *Customers) Incr() {
+	c.Q <- 1
+	go func() {
+		c.mu.Lock()
+		for i := 0; i < len(c.list); i++ {
+			c.list[i].Done()
+		}
+		<-c.Q
+		c.mu.Unlock()
+	}()
 }
 
 // All of the available customers is returned out from the interface
